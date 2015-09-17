@@ -8,7 +8,13 @@ import zlib from 'zlib';
 
 function isDispo(content) {
 	let $ = cheerio.load(content);
-	return ($("tr.zone-dedicated-availability[data-ref='150sk10']").find('.out-of-stock').length == 0) ? Promise.resolve() : Promise.reject(); 
+	if ($("tr.zone-dedicated-availability[data-ref='150sk10']").find('.out-of-stock').length == 0) {
+		process.stdout.write('$');
+		return Promise.resolve()
+	} else {
+		process.stdout.write('.');
+		return Promise.reject();
+	}
 }
 
 function sendNotif() {
@@ -20,7 +26,6 @@ function sendNotif() {
 }
 
 function getPage() {
-	process.stdout.write('.');
 	let options = {
 		url: 'https://www.kimsufi.com/fr/index.xml',
 		headers: {
@@ -30,7 +35,12 @@ function getPage() {
 	};
         
 	request(options, (error, response, body) => {
-		isDispo(body).then(sendNotif, setTimeout(getPage, 3000));
+		if (error) {
+			process.stdout.write('?');
+			setTimeout(getPage, 3000)
+		}
+		else
+			isDispo(body).then(sendNotif, setTimeout(getPage, 3000));
 	});
 }
 
